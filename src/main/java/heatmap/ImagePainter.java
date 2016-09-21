@@ -1,25 +1,32 @@
 package heatmap;
 
-import java.awt.*;
+import com.theeyetribe.clientsdk.IGazeListener;
+import com.theeyetribe.clientsdk.data.GazeData;
+
+import java.awt.Graphics2D;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 
-public class ImagePainter {
+public class ImagePainter implements IGazeListener {
+
+    final int AREA = 32;
 
     private BufferedImage img;
 
-    public ImagePainter(BufferedImage img) {
-        Graphics2D    graphics = img.createGraphics();
-        graphics.setPaint ( new Color ( Color.HSBtoRGB(0.66f, 1f, 0.01f)) );
-        graphics.fillRect ( 0, 0, img.getWidth(), img.getHeight());
-    }
+    /**
+     * Sets image, and fills it with the starting color.
+     */
+    public void initializeImage(int w, int h) {
+        img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 
-    public BufferedImage getImg() {
-        return img;
+        Graphics2D graphics = img.createGraphics();
+        graphics.setPaint ( new Color( Color.HSBtoRGB(0.66f, 1f, 0.01f)) );
+        graphics.fillRect ( 0, 0, img.getWidth(), img.getHeight());
     }
 
     public boolean updateImage(int gX, int gY) {
 
-        int area = 32;
+        //TODO: Fix hue and brightness magic number and float nonsense.
 
         int w = img.getWidth();
         int h = img.getHeight();
@@ -29,16 +36,24 @@ public class ImagePainter {
             return false;
         }
 
-        for (int x = -area; x <= area; x++) {
+        for (int x = -AREA; x <= AREA; x++) {
 
-            if (x < 0) {
+            if (gX + x < 0) {
                 continue;
             }
 
-            for (int y = -area; y <= area; y++) {
+            if (gX + x > w) {
+                break;
+            }
 
-                if (y < 0) {
+            for (int y = -AREA; y <= AREA; y++) {
+
+                if (gY + y < 0) {
                     continue;
+                }
+
+                if (gY + y > h) {
+                    break;
                 }
 
                 int color = img.getRGB(gX+x, gY+y);
@@ -48,8 +63,6 @@ public class ImagePainter {
                 int b = color & 0x0000ff;
 
                 float[] hsb = Color.RGBtoHSB(r,g,b, null);
-
-                //System.out.println(hsb[0] + ", " + hsb[1] + ", " + hsb[2]);
 
                 if (hsb[0] <= 0.004575163f) {
                     continue;
@@ -61,7 +74,6 @@ public class ImagePainter {
 
                 else {
                     hsb[0] -= 0.005f;
-                    //hsb[2] = 1f;
                 }
 
                 hsb[1] = 1f;
@@ -73,5 +85,12 @@ public class ImagePainter {
         }
 
         return true;
+    }
+
+    public void onGazeUpdate(GazeData gazeData) {
+        int gX = (int) gazeData.rawCoordinates.x;
+        int gY = (int) gazeData.rawCoordinates.y;
+
+        boolean success = updateImage(gX, gY);
     }
 }

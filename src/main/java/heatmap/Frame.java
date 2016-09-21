@@ -1,25 +1,32 @@
 package heatmap;
 
+import com.theeyetribe.clientsdk.GazeManager;
+
 import javax.swing.*;
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 public class Frame extends JFrame {
 
-    private ImagePanel imagePanel;
-
     private GraphicsDevice[] graphicsDevices;
+    private ImagePainter imagePainter;
 
-    //Heatmap settings components, in order of appearance
+    //Heatmap settings components, in order of appearance.
     private JPanel settingsPanel;
     private JComboBox<String> screenBox;
     private JSlider intensitySlider;
     private JButton captureButton;
     private JButton saveButton;
 
-    public Frame(BufferedImage img) {
+    //Notifies user when EyeTribe server is unavailable.
+    private JLabel warningLabel;
 
-        graphicsDevices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    public Frame() {
+        GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        graphicsDevices = graphicsEnvironment.getScreenDevices();
+        DisplayMode defaultDisplayMode = graphicsEnvironment.getDefaultScreenDevice().getDisplayMode();
+
+        imagePainter = new ImagePainter();
+        imagePainter.initializeImage(defaultDisplayMode.getWidth(), defaultDisplayMode.getHeight());
 
         //Set L&F to system look and feel.
         try {
@@ -104,11 +111,42 @@ public class Frame extends JFrame {
             }
         }
 
+        warningLabel = new JLabel("COULD NOT CONNECT TO SERVER", JLabel.CENTER);
+        warningLabel.setVisible(false);
+
+        //Initialize GazeManager, add ImagePainter as Listener.
+        {
+
+            final GazeManager gm = GazeManager.getInstance();
+            gm.addGazeListener(imagePainter);
+
+            if (!gm.activate()) {
+                warningLabel.setVisible(true);
+                captureButton.setEnabled(false);
+            }
+
+            //This is best practice, supposedly
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run()
+                {
+                    gm.removeGazeListener(imagePainter);
+                    gm.deactivate();
+                }
+            });
+        }
+
         add(settingsPanel, BorderLayout.CENTER);
+        add(warningLabel, BorderLayout.SOUTH);
 
         pack();
 
         setLocationRelativeTo(null);
         setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        System.out.println("EyeTribe Heatmap");
+        Frame frame = new Frame();
     }
 }
