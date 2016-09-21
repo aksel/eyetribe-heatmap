@@ -25,21 +25,8 @@ public class Run {
             System.exit(1);
         }
 
-        //Create ImagePainter
-        {
-            GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-            int w = gd.getDisplayMode().getWidth();
-            int h = gd.getDisplayMode().getHeight();
-
-            BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-            imagePainter = new ImagePainter(img);
-        }
-
-        frame = new Frame(imagePainter.getImg());
-
         //This is best practice, supposedly
-        Runtime.getRuntime().addShutdownHook(new Thread()
-        {
+        Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
             public void run()
             {
@@ -47,6 +34,15 @@ public class Run {
                 gm.deactivate();
             }
         });
+
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        int w = gd.getDisplayMode().getWidth();
+        int h = gd.getDisplayMode().getHeight();
+
+        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        imagePainter = new ImagePainter(img);
+
+        frame = new Frame(imagePainter.getImg());
     }
 
     private static class GazeListener implements IGazeListener
