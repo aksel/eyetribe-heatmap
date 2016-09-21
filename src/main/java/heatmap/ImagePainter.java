@@ -3,21 +3,14 @@ package heatmap;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
-public class ImageHandler {
+public class ImagePainter {
 
     private BufferedImage img;
 
-    public ImageHandler() {
-
-        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        int w = gd.getDisplayMode().getWidth();
-        int h = gd.getDisplayMode().getHeight();
-
-        img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+    public ImagePainter(BufferedImage img) {
         Graphics2D    graphics = img.createGraphics();
-
         graphics.setPaint ( new Color ( Color.HSBtoRGB(0.66f, 1f, 0.01f)) );
-        graphics.fillRect ( 0, 0, w, h);
+        graphics.fillRect ( 0, 0, img.getWidth(), img.getHeight());
     }
 
     public BufferedImage getImg() {

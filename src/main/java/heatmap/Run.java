@@ -4,12 +4,13 @@ import com.theeyetribe.clientsdk.GazeManager;
 import com.theeyetribe.clientsdk.IGazeListener;
 import com.theeyetribe.clientsdk.data.GazeData;
 
-import javax.swing.SwingUtilities;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Run {
 
     static Frame frame;
-    static ImageHandler imageHandler;
+    static ImagePainter imagePainter;
 
     public static void main(String[] args) {
         System.out.println("EyeTribe Heatmap");
@@ -24,10 +25,17 @@ public class Run {
             System.exit(1);
         }
 
-        //Create ImageHandler
-        imageHandler = new ImageHandler();
+        //Create ImagePainter
+        {
+            GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+            int w = gd.getDisplayMode().getWidth();
+            int h = gd.getDisplayMode().getHeight();
 
-        frame = new Frame(imageHandler.getImg());
+            BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            imagePainter = new ImagePainter(img);
+        }
+
+        frame = new Frame(imagePainter.getImg());
 
         //This is best practice, supposedly
         Runtime.getRuntime().addShutdownHook(new Thread()
@@ -48,7 +56,7 @@ public class Run {
             int gX = (int) gazeData.rawCoordinates.x;
             int gY = (int) gazeData.rawCoordinates.y;
 
-            boolean success = imageHandler.updateImage(gX, gY);
+            boolean success = imagePainter.updateImage(gX, gY);
 
             if (success) {
                 frame.repaint();
