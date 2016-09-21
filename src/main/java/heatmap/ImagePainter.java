@@ -11,25 +11,29 @@ public class ImagePainter implements IGazeListener {
 
     final int AREA = 32;
 
-    private BufferedImage img;
+    private BufferedImage image;
 
     /**
-     * Sets image, and fills it with the starting color.
+     * Creates image with specified dimensions, and fills it with the starting color.
      */
     public void initializeImage(int w, int h) {
-        img = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
 
-        Graphics2D graphics = img.createGraphics();
+        Graphics2D graphics = image.createGraphics();
         graphics.setPaint ( new Color( Color.HSBtoRGB(0.66f, 1f, 0.01f)) );
-        graphics.fillRect ( 0, 0, img.getWidth(), img.getHeight());
+        graphics.fillRect ( 0, 0, image.getWidth(), image.getHeight());
+    }
+
+    public BufferedImage getImage() {
+        return image;
     }
 
     public boolean updateImage(int gX, int gY) {
 
         //TODO: Fix hue and brightness magic number and float nonsense.
 
-        int w = img.getWidth();
-        int h = img.getHeight();
+        int w = image.getWidth();
+        int h = image.getHeight();
 
         //Check bounds
         if (gX < 0 || gX > w || gY < 0 || gY > h) {
@@ -56,7 +60,7 @@ public class ImagePainter implements IGazeListener {
                     break;
                 }
 
-                int color = img.getRGB(gX+x, gY+y);
+                int color = image.getRGB(gX+x, gY+y);
 
                 int r = (color & 0xff0000) >>> 16;
                 int g = (color & 0x00ff00) >>> 8;
@@ -80,7 +84,7 @@ public class ImagePainter implements IGazeListener {
 
                 color = Color.HSBtoRGB(hsb[0], hsb[1], hsb[2]);
 
-                img.setRGB(gX+x, gY+y, color);
+                image.setRGB(gX+x, gY+y, color);
             }
         }
 

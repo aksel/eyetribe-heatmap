@@ -2,27 +2,26 @@ package heatmap;
 
 import com.theeyetribe.clientsdk.GazeManager;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 public class Frame extends JFrame {
 
-    private GraphicsDevice[] graphicsDevices;
     private ImagePainter imagePainter;
+    private GazeManager gazeManager;
 
-    //Heatmap settings components, in order of appearance.
-    private JPanel settingsPanel;
-    private JComboBox<String> screenBox;
-    private JSlider intensitySlider;
-    private JButton captureButton;
-    private JButton saveButton;
-
-    //Notifies user when EyeTribe server is unavailable.
-    private JLabel warningLabel;
+    private JButton startCaptureButton;
+    private JButton stopCaptureButton;
 
     public Frame() {
         GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        graphicsDevices = graphicsEnvironment.getScreenDevices();
+        GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
         DisplayMode defaultDisplayMode = graphicsEnvironment.getDefaultScreenDevice().getDisplayMode();
 
         imagePainter = new ImagePainter();
@@ -41,11 +40,11 @@ public class Frame extends JFrame {
         setLayout(new BorderLayout());
         setResizable(false);
 
+        JPanel settingsPanel = new JPanel();
+        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+
         //Initialize and add heatmap settings components.
         {
-            settingsPanel = new JPanel();
-            settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
-
             //Right-alignment, no gaps
             FlowLayout settingComponentLayout = new FlowLayout();
             settingComponentLayout.setHgap(0);
@@ -64,7 +63,7 @@ public class Frame extends JFrame {
                     screenNames[i] = displayMode.getWidth() + "x" + displayMode.getHeight();
                 }
 
-                screenBox = new JComboBox<String>(screenNames);
+                JComboBox<String> screenBox = new JComboBox<String>(screenNames);
                 screenBox.setToolTipText("Choose which screen to record from.");
 
                 //TODO: Add listener to screenbox
@@ -80,7 +79,7 @@ public class Frame extends JFrame {
                 intensityPanel.setLayout(settingComponentLayout);
                 intensityPanel.setBorder(BorderFactory.createTitledBorder("Intensity"));
 
-                intensitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
+                JSlider intensitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
                 intensitySlider.setMajorTickSpacing(10);
                 intensitySlider.setMinorTickSpacing(5);
                 intensitySlider.setPaintTicks(true);
@@ -98,46 +97,37 @@ public class Frame extends JFrame {
             {
                 JPanel buttonsPanel = new JPanel();
 
-                captureButton = new JButton("Capture");
-                saveButton = new JButton("Save");
-                saveButton.setEnabled(false);
+                startCaptureButton = new JButton("Start");
+                startCaptureButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        startCapture();
+                    }
+                });
 
-                //TODO: Add listener to buttons
+                stopCaptureButton = new JButton("Stop");
+                stopCaptureButton.setEnabled(false);
+                stopCaptureButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        stopCapture();
+                    }
+                });
 
-                buttonsPanel.add(captureButton);
+                JButton saveButton = new JButton("Save");
+                saveButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        saveImage();
+                    }
+                });
+
+                buttonsPanel.add(startCaptureButton);
+                buttonsPanel.add(stopCaptureButton);
                 buttonsPanel.add(saveButton);
 
                 settingsPanel.add(buttonsPanel);
             }
         }
 
-        warningLabel = new JLabel("COULD NOT CONNECT TO SERVER", JLabel.CENTER);
-        warningLabel.setVisible(false);
-
-        //Initialize GazeManager, add ImagePainter as Listener.
-        {
-
-            final GazeManager gm = GazeManager.getInstance();
-            gm.addGazeListener(imagePainter);
-
-            if (!gm.activate()) {
-                warningLabel.setVisible(true);
-                captureButton.setEnabled(false);
-            }
-
-            //This is best practice, supposedly
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run()
-                {
-                    gm.removeGazeListener(imagePainter);
-                    gm.deactivate();
-                }
-            });
-        }
-
         add(settingsPanel, BorderLayout.CENTER);
-        add(warningLabel, BorderLayout.SOUTH);
 
         pack();
 
@@ -145,8 +135,74 @@ public class Frame extends JFrame {
         setVisible(true);
     }
 
+    private void startCapture() {
+
+        //Initialize GazeManager, add ImagePainter as Listener.
+        {
+            gazeManager = GazeManager.getInstance();
+            gazeManager.addGazeListener(imagePainter);
+
+            //On shutdown, stop gazemanager and remove the listener.
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run()
+                {
+                    gazeManager.removeGazeListener(imagePainter);
+                    gazeManager.deactivate();
+                }
+            });
+        }
+
+        new Thread() {
+            @Override
+            public void run() {
+                gazeManager.activate();
+            }
+        }.run();
+
+        //If gazemanager is not activated, prompt user with warning.
+        if (!gazeManager.isActivated()) {
+            JOptionPane.showMessageDialog(this,
+                    "Could not start capture.\nIs EyeTribe Server running?",
+                    "Connection Failed",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+
+        else {
+            startCaptureButton.setEnabled(false);
+            stopCaptureButton.setEnabled(true);
+        }
+    }
+
+    private void stopCapture() {
+        startCaptureButton.setEnabled(true);
+        stopCaptureButton.setEnabled(false);
+
+        //Remove listener and deactivate, preparing it for reactivation.
+        gazeManager.removeGazeListener(imagePainter);
+        gazeManager.deactivate();
+    }
+
+    private void saveImage() {
+
+        //TODO: Output path selection.
+
+        BufferedImage image = imagePainter.getImage();
+
+        try {
+            ImageIO.write(image, "png", new File("img.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        JOptionPane.showMessageDialog(this,
+                "Images saved to: img.png",
+                "Done Capturing.",
+                JOptionPane.PLAIN_MESSAGE);
+    }
+
     public static void main(String[] args) {
         System.out.println("EyeTribe Heatmap");
-        Frame frame = new Frame();
+        new Frame();
     }
 }
