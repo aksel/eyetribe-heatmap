@@ -17,12 +17,6 @@ public class Frame extends JFrame {
 
     private GazeManager gazeManager;
 
-    /**
-     * Resolutions of connected screen devices.
-     * [devices...][x,y]
-     */
-    private int[][] resolutions;
-
     private JButton startCaptureButton;
     private JButton stopCaptureButton;
 
@@ -42,10 +36,10 @@ public class Frame extends JFrame {
 
         initGazeManager();
 
-        setScreenResolutions();
+        int[] res = getScreenResolution();
 
         imagePainter = new ImagePainter();
-        imagePainter.initializeImage(resolutions[0][0], resolutions[0][1]);
+        imagePainter.initializeImage(res[0], res[1]);
 
         add(createSettingsPanel(), BorderLayout.CENTER);
 
@@ -71,20 +65,20 @@ public class Frame extends JFrame {
             }
         });
 
-        gazeManager.activateAsync();
+        //Do not use activateAsync. Thread has to wait until it has been activated.
+        gazeManager.activate();
     }
 
-    private void setScreenResolutions() {
-        GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] devices = environment.getScreenDevices();
+    /**
+     * Gets screen resolution from GazeManager.
+     * @return [width, height]
+     */
+    private int[] getScreenResolution() {
+        int[] res = new int[2];
+        res[0] = gazeManager.getScreenResolutionWidth();
+        res[1] = gazeManager.getScreenResolutionHeight();
 
-        resolutions = new int[devices.length][2];
-
-        for (int i = 0; i < devices.length; i++) {
-            DisplayMode displayMode = devices[i].getDisplayMode();
-            resolutions[i][0] = displayMode.getWidth();
-            resolutions[i][1] = displayMode.getHeight();
-        }
+        return res;
     }
 
     private JPanel createSettingsPanel() {
@@ -96,27 +90,6 @@ public class Frame extends JFrame {
         settingComponentLayout.setHgap(0);
         settingComponentLayout.setVgap(0);
         settingComponentLayout.setAlignment(FlowLayout.RIGHT);
-
-        //If there is more than one screen connected, let user choose which screen to record, via screenBox.
-        if (resolutions.length > 0) {
-            JPanel screenPanel = new JPanel();
-            screenPanel.setLayout(settingComponentLayout);
-            screenPanel.setBorder(BorderFactory.createTitledBorder("Screen"));
-
-            String[] screenNames = new String[resolutions.length];
-            for (int i = 0; i < resolutions.length; i++) {
-                screenNames[i] = resolutions[i][0] + "x" + resolutions[i][1];
-            }
-
-            JComboBox<String> screenBox = new JComboBox<String>(screenNames);
-            screenBox.setToolTipText("Choose which screen to record from.");
-
-            //TODO: Add listener to screenbox
-
-            screenPanel.add(screenBox);
-
-            settingsPanel.add(screenPanel);
-        }
 
         //Create intensity slider.
         {
