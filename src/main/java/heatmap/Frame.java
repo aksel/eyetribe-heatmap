@@ -14,7 +14,6 @@ import java.io.IOException;
 public class Frame extends JFrame {
 
     private ImagePainter imagePainter;
-    private GazeManager gazeManager;
 
     /**
      * Resolutions of connected screen devices.
@@ -26,7 +25,6 @@ public class Frame extends JFrame {
     private JButton stopCaptureButton;
 
     public Frame() {
-
         setTitle("Heatmap");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -40,6 +38,8 @@ public class Frame extends JFrame {
             e.printStackTrace();
         }
 
+        initGazeManager();
+
         setScreenResolutions();
 
         imagePainter = new ImagePainter();
@@ -51,6 +51,25 @@ public class Frame extends JFrame {
 
         setLocationRelativeTo(null);
         setVisible(true);
+    }
+
+    /**
+     * Initialize the GazeManager. Add shutdown hook, that removes the listener, and deactivates it.
+     */
+    private void initGazeManager() {
+        final GazeManager gazeManager = GazeManager.getInstance();
+
+        //On shutdown, stop gazemanager and remove the listener.
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run()
+            {
+                gazeManager.removeGazeListener(imagePainter);
+                gazeManager.deactivate();
+            }
+        });
+
+        gazeManager.activateAsync();
     }
 
     private void setScreenResolutions() {
@@ -67,7 +86,6 @@ public class Frame extends JFrame {
     }
 
     private JPanel createSettingsPanel() {
-
         JPanel settingsPanel = new JPanel();
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
 
@@ -155,29 +173,7 @@ public class Frame extends JFrame {
     }
 
     private void startCapture() {
-
-        //Initialize GazeManager, add ImagePainter as Listener.
-        {
-            gazeManager = GazeManager.getInstance();
-            gazeManager.addGazeListener(imagePainter);
-
-            //On shutdown, stop gazemanager and remove the listener.
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run()
-                {
-                    gazeManager.removeGazeListener(imagePainter);
-                    gazeManager.deactivate();
-                }
-            });
-        }
-
-        new Thread() {
-            @Override
-            public void run() {
-                gazeManager.activate();
-            }
-        }.run();
+        GazeManager gazeManager = GazeManager.getInstance();
 
         //If gazemanager is not activated, prompt user with warning.
         if (!gazeManager.isActivated()) {
@@ -188,18 +184,18 @@ public class Frame extends JFrame {
         }
 
         else {
+            gazeManager.addGazeListener(imagePainter);
+
             startCaptureButton.setEnabled(false);
             stopCaptureButton.setEnabled(true);
         }
     }
 
     private void stopCapture() {
+        GazeManager.getInstance().removeGazeListener(imagePainter);
+
         startCaptureButton.setEnabled(true);
         stopCaptureButton.setEnabled(false);
-
-        //Remove listener and deactivate, preparing it for reactivation.
-        gazeManager.removeGazeListener(imagePainter);
-        gazeManager.deactivate();
     }
 
     private void saveImage() {
