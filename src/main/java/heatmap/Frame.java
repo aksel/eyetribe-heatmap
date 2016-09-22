@@ -16,16 +16,21 @@ public class Frame extends JFrame {
     private ImagePainter imagePainter;
     private GazeManager gazeManager;
 
+    /**
+     * Resolutions of connected screen devices.
+     * [devices...][x,y]
+     */
+    private int[][] resolutions;
+
     private JButton startCaptureButton;
     private JButton stopCaptureButton;
 
     public Frame() {
-        GraphicsEnvironment graphicsEnvironment = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] graphicsDevices = graphicsEnvironment.getScreenDevices();
-        DisplayMode defaultDisplayMode = graphicsEnvironment.getDefaultScreenDevice().getDisplayMode();
 
-        imagePainter = new ImagePainter();
-        imagePainter.initializeImage(defaultDisplayMode.getWidth(), defaultDisplayMode.getHeight());
+        setTitle("Heatmap");
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+        setResizable(false);
 
         //Set L&F to system look and feel.
         try {
@@ -35,104 +40,118 @@ public class Frame extends JFrame {
             e.printStackTrace();
         }
 
-        setTitle("Heatmap");
-        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
-        setResizable(false);
+        setScreenResolutions();
 
-        JPanel settingsPanel = new JPanel();
-        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+        imagePainter = new ImagePainter();
+        imagePainter.initializeImage(resolutions[0][0], resolutions[0][1]);
 
-        //Initialize and add heatmap settings components.
-        {
-            //Right-alignment, no gaps
-            FlowLayout settingComponentLayout = new FlowLayout();
-            settingComponentLayout.setHgap(0);
-            settingComponentLayout.setVgap(0);
-            settingComponentLayout.setAlignment(FlowLayout.RIGHT);
-
-            //If there is more than one screen connected, let user choose which screen to record, via screenBox.
-            if (graphicsDevices.length > 0) {
-                JPanel screenPanel = new JPanel();
-                screenPanel.setLayout(settingComponentLayout);
-                screenPanel.setBorder(BorderFactory.createTitledBorder("Screen"));
-
-                String[] screenNames = new String[graphicsDevices.length];
-                for (int i = 0; i < graphicsDevices.length; i++) {
-                    DisplayMode displayMode = graphicsDevices[0].getDisplayMode();
-                    screenNames[i] = displayMode.getWidth() + "x" + displayMode.getHeight();
-                }
-
-                JComboBox<String> screenBox = new JComboBox<String>(screenNames);
-                screenBox.setToolTipText("Choose which screen to record from.");
-
-                //TODO: Add listener to screenbox
-
-                screenPanel.add(screenBox);
-
-                settingsPanel.add(screenPanel);
-            }
-
-            //Create intensity slider.
-            {
-                JPanel intensityPanel = new JPanel();
-                intensityPanel.setLayout(settingComponentLayout);
-                intensityPanel.setBorder(BorderFactory.createTitledBorder("Intensity"));
-
-                JSlider intensitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
-                intensitySlider.setMajorTickSpacing(10);
-                intensitySlider.setMinorTickSpacing(5);
-                intensitySlider.setPaintTicks(true);
-                intensitySlider.setPaintLabels(true);
-                intensitySlider.setToolTipText("This determines how quickly the color goes from blue to red.");
-
-                //TODO: Add listener to slider
-
-                intensityPanel.add(intensitySlider);
-
-                settingsPanel.add(intensityPanel);
-            }
-
-            //Create buttons
-            {
-                JPanel buttonsPanel = new JPanel();
-
-                startCaptureButton = new JButton("Start");
-                startCaptureButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        startCapture();
-                    }
-                });
-
-                stopCaptureButton = new JButton("Stop");
-                stopCaptureButton.setEnabled(false);
-                stopCaptureButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        stopCapture();
-                    }
-                });
-
-                JButton saveButton = new JButton("Save");
-                saveButton.addActionListener(new ActionListener() {
-                    public void actionPerformed(ActionEvent e) {
-                        saveImage();
-                    }
-                });
-
-                buttonsPanel.add(startCaptureButton);
-                buttonsPanel.add(stopCaptureButton);
-                buttonsPanel.add(saveButton);
-
-                settingsPanel.add(buttonsPanel);
-            }
-        }
-
-        add(settingsPanel, BorderLayout.CENTER);
+        add(createSettingsPanel(), BorderLayout.CENTER);
 
         pack();
 
         setLocationRelativeTo(null);
         setVisible(true);
+    }
+
+    private void setScreenResolutions() {
+        GraphicsEnvironment environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] devices = environment.getScreenDevices();
+
+        resolutions = new int[devices.length][2];
+
+        for (int i = 0; i < devices.length; i++) {
+            DisplayMode displayMode = devices[i].getDisplayMode();
+            resolutions[i][0] = displayMode.getWidth();
+            resolutions[i][1] = displayMode.getHeight();
+        }
+    }
+
+    private JPanel createSettingsPanel() {
+
+        JPanel settingsPanel = new JPanel();
+        settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
+
+        //Right-alignment, no gaps
+        FlowLayout settingComponentLayout = new FlowLayout();
+        settingComponentLayout.setHgap(0);
+        settingComponentLayout.setVgap(0);
+        settingComponentLayout.setAlignment(FlowLayout.RIGHT);
+
+        //If there is more than one screen connected, let user choose which screen to record, via screenBox.
+        if (resolutions.length > 0) {
+            JPanel screenPanel = new JPanel();
+            screenPanel.setLayout(settingComponentLayout);
+            screenPanel.setBorder(BorderFactory.createTitledBorder("Screen"));
+
+            String[] screenNames = new String[resolutions.length];
+            for (int i = 0; i < resolutions.length; i++) {
+                screenNames[i] = resolutions[i][0] + "x" + resolutions[i][1];
+            }
+
+            JComboBox<String> screenBox = new JComboBox<String>(screenNames);
+            screenBox.setToolTipText("Choose which screen to record from.");
+
+            //TODO: Add listener to screenbox
+
+            screenPanel.add(screenBox);
+
+            settingsPanel.add(screenPanel);
+        }
+
+        //Create intensity slider.
+        {
+            JPanel intensityPanel = new JPanel();
+            intensityPanel.setLayout(settingComponentLayout);
+            intensityPanel.setBorder(BorderFactory.createTitledBorder("Intensity"));
+
+            JSlider intensitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
+            intensitySlider.setMajorTickSpacing(10);
+            intensitySlider.setMinorTickSpacing(5);
+            intensitySlider.setPaintTicks(true);
+            intensitySlider.setPaintLabels(true);
+            intensitySlider.setToolTipText("This determines how quickly the color goes from blue to red.");
+
+            //TODO: Add listener to slider
+
+            intensityPanel.add(intensitySlider);
+
+            settingsPanel.add(intensityPanel);
+        }
+
+        //Create buttons
+        {
+            JPanel buttonsPanel = new JPanel();
+
+            startCaptureButton = new JButton("Start");
+            startCaptureButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    startCapture();
+                }
+            });
+
+            stopCaptureButton = new JButton("Stop");
+            stopCaptureButton.setEnabled(false);
+            stopCaptureButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    stopCapture();
+                }
+            });
+
+            JButton saveButton = new JButton("Save");
+            saveButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    saveImage();
+                }
+            });
+
+            buttonsPanel.add(startCaptureButton);
+            buttonsPanel.add(stopCaptureButton);
+            buttonsPanel.add(saveButton);
+
+            settingsPanel.add(buttonsPanel);
+        }
+
+        return settingsPanel;
     }
 
     private void startCapture() {
