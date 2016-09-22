@@ -15,6 +15,8 @@ public class Frame extends JFrame {
 
     private ImagePainter imagePainter;
 
+    private GazeManager gazeManager;
+
     /**
      * Resolutions of connected screen devices.
      * [devices...][x,y]
@@ -57,7 +59,7 @@ public class Frame extends JFrame {
      * Initialize the GazeManager. Add shutdown hook, that removes the listener, and deactivates it.
      */
     private void initGazeManager() {
-        final GazeManager gazeManager = GazeManager.getInstance();
+        gazeManager = GazeManager.getInstance();
 
         //On shutdown, stop gazemanager and remove the listener.
         Runtime.getRuntime().addShutdownHook(new Thread() {
@@ -173,8 +175,6 @@ public class Frame extends JFrame {
     }
 
     private void startCapture() {
-        GazeManager gazeManager = GazeManager.getInstance();
-
         //If gazemanager is not activated, prompt user with warning.
         if (!gazeManager.isActivated()) {
             JOptionPane.showMessageDialog(this,
@@ -192,7 +192,7 @@ public class Frame extends JFrame {
     }
 
     private void stopCapture() {
-        GazeManager.getInstance().removeGazeListener(imagePainter);
+        gazeManager.removeGazeListener(imagePainter);
 
         startCaptureButton.setEnabled(true);
         stopCaptureButton.setEnabled(false);
