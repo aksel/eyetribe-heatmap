@@ -20,6 +20,11 @@ public class Frame extends JFrame {
     private JButton startCaptureButton;
     private JButton stopCaptureButton;
 
+    /**
+     * File path for file-chooser to start at.
+     */
+    private String filePath = "C:\\";
+
     public Frame() {
         setTitle("Heatmap");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -35,11 +40,7 @@ public class Frame extends JFrame {
         }
 
         initGazeManager();
-
-        int[] res = getScreenResolution();
-
-        imagePainter = new ImagePainter();
-        imagePainter.initializeImage(res[0], res[1]);
+        initImagePainter();
 
         add(createSettingsPanel(), BorderLayout.CENTER);
 
@@ -70,15 +71,18 @@ public class Frame extends JFrame {
     }
 
     /**
-     * Gets screen resolution from GazeManager.
-     * @return [width, height]
+     * Initializes ImagePainter.
+     * It is initialized with the screen resolution gotten from the GazeManager.
+     * This resets the current heatmap.
      */
-    private int[] getScreenResolution() {
-        int[] res = new int[2];
-        res[0] = gazeManager.getScreenResolutionWidth();
-        res[1] = gazeManager.getScreenResolutionHeight();
+    private void initImagePainter() {
+        if (imagePainter == null) {
+            imagePainter = new ImagePainter();
+        }
 
-        return res;
+        //stopCapture();
+        imagePainter.initializeImage(gazeManager.getScreenResolutionWidth(), gazeManager.getScreenResolutionHeight());
+        //startCapture();
     }
 
     private JPanel createSettingsPanel() {
@@ -89,7 +93,7 @@ public class Frame extends JFrame {
         FlowLayout settingComponentLayout = new FlowLayout();
         settingComponentLayout.setHgap(0);
         settingComponentLayout.setVgap(0);
-        settingComponentLayout.setAlignment(FlowLayout.RIGHT);
+        settingComponentLayout.setAlignment(FlowLayout.CENTER);
 
         //Create intensity slider.
         {
@@ -111,9 +115,43 @@ public class Frame extends JFrame {
             settingsPanel.add(intensityPanel);
         }
 
-        //Create buttons
+        //Create image settings panel
         {
-            JPanel buttonsPanel = new JPanel();
+            JPanel imageSettingsPanel = new JPanel();
+            imageSettingsPanel.setLayout(settingComponentLayout);
+            imageSettingsPanel.setBorder(BorderFactory.createTitledBorder("Image"));
+
+            final JButton pathButton = new JButton("Folder");
+            pathButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    pickPath();
+                }
+            });
+
+            JButton resetButton = new JButton("Reset");
+            resetButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    initImagePainter();
+                }
+            });
+
+            JButton saveButton = new JButton("Save");
+            saveButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    saveImage();
+                }
+            });
+
+            imageSettingsPanel.add(pathButton);
+            imageSettingsPanel.add(resetButton);
+            imageSettingsPanel.add(saveButton);
+
+            settingsPanel.add(imageSettingsPanel);
+        }
+
+        //Create capture buttons
+        {
+            JPanel captureButtonsPanel = new JPanel();
 
             startCaptureButton = new JButton("Start");
             startCaptureButton.addActionListener(new ActionListener() {
@@ -130,21 +168,23 @@ public class Frame extends JFrame {
                 }
             });
 
-            JButton saveButton = new JButton("Save");
-            saveButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    saveImage();
-                }
-            });
+            captureButtonsPanel.add(startCaptureButton);
+            captureButtonsPanel.add(stopCaptureButton);
 
-            buttonsPanel.add(startCaptureButton);
-            buttonsPanel.add(stopCaptureButton);
-            buttonsPanel.add(saveButton);
-
-            settingsPanel.add(buttonsPanel);
+            settingsPanel.add(captureButtonsPanel);
         }
 
         return settingsPanel;
+    }
+
+    private void pickPath() {
+        JFileChooser fc = new JFileChooser(filePath);
+        fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY);
+        int result = fc.showDialog(Frame.this, "Pick Folder");
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            filePath = fc.getSelectedFile().getAbsolutePath();
+        }
     }
 
     private void startCapture() {
@@ -172,19 +212,18 @@ public class Frame extends JFrame {
     }
 
     private void saveImage() {
-
-        //TODO: Output path selection.
-
         BufferedImage image = imagePainter.getImage();
 
+        String fileName = System.currentTimeMillis() + "_heatmap.png";
+
         try {
-            ImageIO.write(image, "png", new File("img.png"));
+            ImageIO.write(image, "png", new File(filePath + fileName));
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         JOptionPane.showMessageDialog(this,
-                "Images saved to: img.png",
+                "Image saved to: " + filePath + "\\" + fileName ,
                 "Done Capturing.",
                 JOptionPane.PLAIN_MESSAGE);
     }
