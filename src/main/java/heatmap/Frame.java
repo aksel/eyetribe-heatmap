@@ -4,11 +4,13 @@ import com.theeyetribe.clientsdk.GazeManager;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Frame extends JFrame {
@@ -23,7 +25,7 @@ public class Frame extends JFrame {
     /**
      * File path for file-chooser to start at.
      */
-    private String filePath = "C:\\";
+    private String lastFolder = "C:\\";
 
     public Frame() {
         setTitle("Heatmap");
@@ -115,43 +117,11 @@ public class Frame extends JFrame {
             settingsPanel.add(intensityPanel);
         }
 
-        //Create image settings panel
-        {
-            JPanel imageSettingsPanel = new JPanel();
-            imageSettingsPanel.setLayout(settingComponentLayout);
-            imageSettingsPanel.setBorder(BorderFactory.createTitledBorder("Image"));
-
-            final JButton pathButton = new JButton("Folder");
-            pathButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    pickPath();
-                }
-            });
-
-            JButton resetButton = new JButton("Reset");
-            resetButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    initImagePainter();
-                }
-            });
-
-            JButton saveButton = new JButton("Save");
-            saveButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent e) {
-                    saveImage();
-                }
-            });
-
-            imageSettingsPanel.add(pathButton);
-            imageSettingsPanel.add(resetButton);
-            imageSettingsPanel.add(saveButton);
-
-            settingsPanel.add(imageSettingsPanel);
-        }
-
         //Create capture buttons
         {
             JPanel captureButtonsPanel = new JPanel();
+            captureButtonsPanel.setLayout(settingComponentLayout);
+            captureButtonsPanel.setBorder(BorderFactory.createTitledBorder("Capture"));
 
             startCaptureButton = new JButton("Start");
             startCaptureButton.addActionListener(new ActionListener() {
@@ -174,17 +144,33 @@ public class Frame extends JFrame {
             settingsPanel.add(captureButtonsPanel);
         }
 
-        return settingsPanel;
-    }
+        //Create image panel
+        {
+            JPanel imageSettingsPanel = new JPanel();
+            imageSettingsPanel.setLayout(settingComponentLayout);
+            imageSettingsPanel.setBorder(BorderFactory.createTitledBorder("Image"));
 
-    private void pickPath() {
-        JFileChooser fc = new JFileChooser(filePath);
-        fc.setFileSelectionMode( JFileChooser.DIRECTORIES_ONLY);
-        int result = fc.showDialog(Frame.this, "Pick Folder");
+            JButton saveButton = new JButton("Save");
+            saveButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    saveImage();
+                }
+            });
 
-        if (result == JFileChooser.APPROVE_OPTION) {
-            filePath = fc.getSelectedFile().getAbsolutePath();
+            JButton resetButton = new JButton("Reset");
+            resetButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    initImagePainter();
+                }
+            });
+
+            imageSettingsPanel.add(saveButton);
+            imageSettingsPanel.add(resetButton);
+
+            settingsPanel.add(imageSettingsPanel);
         }
+
+        return settingsPanel;
     }
 
     private void startCapture() {
@@ -211,21 +197,69 @@ public class Frame extends JFrame {
         stopCaptureButton.setEnabled(false);
     }
 
+    /**
+     * Saves heatmap image to a user-specified path.
+     *
+     * This will stop the capture.
+     * The user picks a filepath and name with a filechooser.
+     * Images are always PNG.
+     */
     private void saveImage() {
+        stopCapture();
+
         BufferedImage image = imagePainter.getImage();
 
-        String fileName = System.currentTimeMillis() + "_heatmap.png";
+        //Create filechooser, that only lets you choose PNG images.
+        JFileChooser fc = new JFileChooser(lastFolder);
+        fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        fc.setFileFilter(new FileFilter() {
+            @Override
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+                final String name = f.getName();
+                return name.endsWith(".png");
+            }
 
-        try {
-            ImageIO.write(image, "png", new File(filePath + fileName));
-        } catch (IOException e) {
-            e.printStackTrace();
+            @Override
+            public String getDescription() {
+                return "*.png";
+            }
+        });
+
+        int result = fc.showDialog(Frame.this, "Save");
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            String filePath = fc.getSelectedFile().getAbsolutePath();
+
+            if (!filePath.endsWith(".png")) {
+                filePath += ".png";
+            }
+
+            File file = new File(filePath);
+
+            if (!file.canWrite()) {
+                JOptionPane.showMessageDialog(this,
+                        "Cannot write file to: " + filePath,
+                        "Error while saving",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try {
+                ImageIO.write(image, "png", file);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    "Heatmap saved to: " + filePath,
+                    "Done Capturing",
+                    JOptionPane.PLAIN_MESSAGE);
+
+            lastFolder = filePath.substring(0, filePath.lastIndexOf('\\'));
         }
-
-        JOptionPane.showMessageDialog(this,
-                "Image saved to: " + filePath + "\\" + fileName ,
-                "Done Capturing.",
-                JOptionPane.PLAIN_MESSAGE);
     }
 
     public static void main(String[] args) {
