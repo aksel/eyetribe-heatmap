@@ -4,13 +4,14 @@ import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
+
 public class BufferedHeatmapImage extends BufferedImage{
-    public BufferedHeatmapImage(int w, int h) {
-        super(w, h, BufferedHeatmapImage.TYPE_4BYTE_ABGR);
+    public BufferedHeatmapImage(int x, int y) {
+        super(x, y, BufferedHeatmapImage.TYPE_INT_RGB);
 
         Graphics2D graphics = createGraphics();
-        graphics.setPaint(new Color( Color.HSBtoRGB(0.66f, 1f, 0.01f)));
-        graphics.fillRect(0, 0, getWidth(), getHeight());
+        graphics.setPaint ( new Color( Color.HSBtoRGB(0.66f, 1f, 0.01f)) );
+        graphics.fillRect ( 0, 0, getWidth(), getHeight());
     }
 
     public void updatePixel(int x, int y) {
