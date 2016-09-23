@@ -1,7 +1,5 @@
 package heatmap;
 
-import com.theeyetribe.clientsdk.GazeManager;
-
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -10,14 +8,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class Frame extends JFrame {
 
     private ImagePainter imagePainter;
-
-    private GazeManager gazeManager;
 
     private JButton startCaptureButton;
     private JButton stopCaptureButton;
@@ -41,8 +36,7 @@ public class Frame extends JFrame {
             e.printStackTrace();
         }
 
-        initGazeManager();
-        initImagePainter();
+        imagePainter = new ImagePainter();
 
         add(createSettingsPanel(), BorderLayout.CENTER);
 
@@ -50,41 +44,6 @@ public class Frame extends JFrame {
 
         setLocationRelativeTo(null);
         setVisible(true);
-    }
-
-    /**
-     * Initialize the GazeManager. Add shutdown hook, that removes the listener, and deactivates it.
-     */
-    private void initGazeManager() {
-        gazeManager = GazeManager.getInstance();
-
-        //On shutdown, stop gazemanager and remove the listener.
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run()
-            {
-                gazeManager.removeGazeListener(imagePainter);
-                gazeManager.deactivate();
-            }
-        });
-
-        //Do not use activateAsync. Thread has to wait until it has been activated.
-        gazeManager.activate();
-    }
-
-    /**
-     * Initializes ImagePainter.
-     * It is initialized with the screen resolution gotten from the GazeManager.
-     * This resets the current heatmap.
-     */
-    private void initImagePainter() {
-        if (imagePainter == null) {
-            imagePainter = new ImagePainter();
-        }
-
-        //stopCapture();
-        imagePainter.initializeImage(gazeManager.getScreenResolutionWidth(), gazeManager.getScreenResolutionHeight());
-        //startCapture();
     }
 
     private JPanel createSettingsPanel() {
@@ -126,7 +85,16 @@ public class Frame extends JFrame {
             startCaptureButton = new JButton("Start");
             startCaptureButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    startCapture();
+                    //If the imagePainter couldn't start the capture, prompt user.
+                    if (!imagePainter.startCapture()) {
+                        JOptionPane.showMessageDialog(Frame.this,
+                                "Could not start capture.\nIs EyeTribe Server running?",
+                                "Connection Failed",
+                                JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        startCaptureButton.setEnabled(false);
+                        stopCaptureButton.setEnabled(true);
+                    }
                 }
             });
 
@@ -134,7 +102,9 @@ public class Frame extends JFrame {
             stopCaptureButton.setEnabled(false);
             stopCaptureButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    stopCapture();
+                    imagePainter.stopCapture();
+                    startCaptureButton.setEnabled(true);
+                    stopCaptureButton.setEnabled(false);
                 }
             });
 
@@ -160,7 +130,7 @@ public class Frame extends JFrame {
             JButton resetButton = new JButton("Reset");
             resetButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    initImagePainter();
+                    imagePainter.initImage();
                 }
             });
 
@@ -173,30 +143,6 @@ public class Frame extends JFrame {
         return settingsPanel;
     }
 
-    private void startCapture() {
-        //If gazemanager is not activated, prompt user with warning.
-        if (!gazeManager.isActivated()) {
-            JOptionPane.showMessageDialog(this,
-                    "Could not start capture.\nIs EyeTribe Server running?",
-                    "Connection Failed",
-                    JOptionPane.WARNING_MESSAGE);
-        }
-
-        else {
-            gazeManager.addGazeListener(imagePainter);
-
-            startCaptureButton.setEnabled(false);
-            stopCaptureButton.setEnabled(true);
-        }
-    }
-
-    private void stopCapture() {
-        gazeManager.removeGazeListener(imagePainter);
-
-        startCaptureButton.setEnabled(true);
-        stopCaptureButton.setEnabled(false);
-    }
-
     /**
      * Saves heatmap image to a user-specified path.
      *
@@ -205,7 +151,7 @@ public class Frame extends JFrame {
      * Images are always PNG.
      */
     private void saveImage() {
-        stopCapture();
+        imagePainter.stopCapture();
 
         BufferedImage image = imagePainter.getImage();
 
@@ -264,6 +210,7 @@ public class Frame extends JFrame {
 
     public static void main(String[] args) {
         System.out.println("EyeTribe Heatmap");
+        //TODO: Verify server is running, before doing anything else.
         new Frame();
     }
 }

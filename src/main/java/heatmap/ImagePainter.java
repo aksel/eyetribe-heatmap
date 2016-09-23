@@ -13,22 +13,34 @@ public class ImagePainter implements IGazeListener {
 
     private BufferedImage image;
 
+    private CaptureManager captureManager;
+
+    public ImagePainter() {
+        captureManager = new CaptureManager(this);
+        initImage();
+    }
+
     /**
-     * Creates image with specified dimensions, and fills it with the starting color.
+     * Creates image with dimension of screen, and fills it with the starting color.
      */
-    public void initializeImage(int w, int h) {
-        image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+    public void initImage() {
+        int[] resolution = captureManager.getScreenResolution();
+        image = new BufferedImage(resolution[0], resolution[1], BufferedImage.TYPE_INT_RGB);
 
         Graphics2D graphics = image.createGraphics();
         graphics.setPaint ( new Color( Color.HSBtoRGB(0.66f, 1f, 0.01f)) );
         graphics.fillRect ( 0, 0, image.getWidth(), image.getHeight());
     }
 
-    public BufferedImage getImage() {
-        return image;
+    public boolean startCapture() {
+        return captureManager.startCapture();
     }
 
-    public boolean updateImage(int gX, int gY) {
+    public void stopCapture() {
+        captureManager.stopCapture();
+    }
+
+    public void updateImage(int gX, int gY) {
 
         //TODO: Fix hue and brightness magic number and float nonsense.
 
@@ -37,7 +49,7 @@ public class ImagePainter implements IGazeListener {
 
         //Check bounds
         if (gX < 0 || gX > w || gY < 0 || gY > h) {
-            return false;
+            return;
         }
 
         for (int x = -AREA; x <= AREA; x++) {
@@ -87,14 +99,16 @@ public class ImagePainter implements IGazeListener {
                 image.setRGB(gX+x, gY+y, color);
             }
         }
-
-        return true;
     }
 
     public void onGazeUpdate(GazeData gazeData) {
         int gX = (int) gazeData.rawCoordinates.x;
         int gY = (int) gazeData.rawCoordinates.y;
 
-        boolean success = updateImage(gX, gY);
+        updateImage(gX, gY);
+    }
+
+    public BufferedImage getImage() {
+        return image;
     }
 }
