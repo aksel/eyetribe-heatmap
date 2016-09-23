@@ -14,8 +14,6 @@ public class Frame extends JFrame {
 
     private ImagePainter imagePainter;
 
-    private JButton startCaptureButton;
-    private JButton stopCaptureButton;
 
     /**
      * File path for file-chooser to start at.
@@ -38,12 +36,35 @@ public class Frame extends JFrame {
 
         imagePainter = new ImagePainter();
 
+        createMenuBar();
         add(createSettingsPanel(), BorderLayout.CENTER);
 
         pack();
 
         setLocationRelativeTo(null);
         setVisible(true);
+    }
+
+    private void createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        JMenu menu = new JMenu("View");
+        menuBar.add(menu);
+
+        JMenuItem menuItem = new JMenuItem("Display Heatmap Frame");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                displayHeatmapFrame();
+            }
+        });
+        menu.add(menuItem);
+
+        setJMenuBar(menuBar);
+    }
+
+    private void displayHeatmapFrame() {
+        BufferedImage image = imagePainter.getImage();
+        new HeatmapFrame(image);
     }
 
     private JPanel createSettingsPanel() {
@@ -82,7 +103,9 @@ public class Frame extends JFrame {
             captureButtonsPanel.setLayout(settingComponentLayout);
             captureButtonsPanel.setBorder(BorderFactory.createTitledBorder("Capture"));
 
-            startCaptureButton = new JButton("Start");
+            final JButton startCaptureButton = new JButton("Start");
+            final JButton stopCaptureButton = new JButton("Stop");
+
             startCaptureButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     //If the imagePainter couldn't start the capture, prompt user.
@@ -98,7 +121,6 @@ public class Frame extends JFrame {
                 }
             });
 
-            stopCaptureButton = new JButton("Stop");
             stopCaptureButton.setEnabled(false);
             stopCaptureButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
