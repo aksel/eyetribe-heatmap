@@ -38,7 +38,10 @@ public class ImagePainter implements IGazeListener {
 
     public void updateImage(int gX, int gY) {
 
-        //TODO: Fix hue and brightness magic number and float nonsense.
+        //Coordinate [0,0] usually means eye-tracker couldn't track the eyes
+        if (gX == 0 && gY == 0) {
+            return;
+        }
 
         int w = image.getWidth();
         int h = image.getHeight();
