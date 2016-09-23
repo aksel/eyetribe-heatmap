@@ -18,7 +18,7 @@ public class BufferedHeatmapImageTest {
 
         int rgb = img.getRGB(0,0);
 
-        Assert.assertEquals(rgb, 0x000000FF);
+        Assert.assertEquals(0x000000FF, rgb);
     }
 
     @Test
@@ -29,7 +29,7 @@ public class BufferedHeatmapImageTest {
 
         int rgb = img.getRGB(0,0);
 
-        Assert.assertEquals(rgb, 0x010000FF);
+        Assert.assertEquals(0x010000FF, rgb);
 
         for(int i = 1; i < 255; i++) {
             img.updatePixel(0,0);
@@ -38,6 +38,17 @@ public class BufferedHeatmapImageTest {
 
         rgb = img.getRGB(0,0);
 
-        Assert.assertEquals(rgb, 0xFF0000FF);
+        Assert.assertEquals(0xFF0000FF, rgb);
+    }
+
+    @Test
+    public void testColorReachesRed() {
+        BufferedHeatmapImage img = getOneByOneImage();
+
+        for(int i = 1; i < 400; i++) {
+            img.updatePixel(0,0);
+        }
+
+        Assert.assertEquals(0xFFFF0000, img.getRGB(0,0));
     }
 }
