@@ -24,7 +24,7 @@ public class BufferedHeatmapImage extends BufferedImage{
     /**
      * Sets all pixels in image to a transparent blue color.
      */
-    private void setInitialColor() {
+    public void setInitialColor() {
         for (int x = 0; x < getWidth(); x++) {
             for (int y = 0; y < getHeight(); y++) {
                 setRGB(x,y, B_MASK);

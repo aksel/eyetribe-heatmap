@@ -152,7 +152,7 @@ public class Frame extends JFrame {
             JButton resetButton = new JButton("Reset");
             resetButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    imagePainter.initImage();
+                    imagePainter.resetImage();
                 }
             });
 

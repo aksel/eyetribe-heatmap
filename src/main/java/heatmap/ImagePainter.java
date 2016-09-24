@@ -28,6 +28,10 @@ public class ImagePainter implements IGazeListener {
         image = new BufferedHeatmapImage(resolution[0], resolution[1]);
     }
 
+    public void resetImage() {
+        image.setInitialColor();
+    }
+
     public boolean startCapture() {
         return captureManager.startCapture();
     }
