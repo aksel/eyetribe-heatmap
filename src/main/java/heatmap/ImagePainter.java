@@ -15,6 +15,11 @@ public class ImagePainter implements IGazeListener {
 
     private CaptureManager captureManager;
 
+    /**
+     * Intensity from 1 to 10
+     */
+    private int intensity;
+
     public ImagePainter() {
         captureManager = new CaptureManager(this);
         initImage();
@@ -75,7 +80,7 @@ public class ImagePainter implements IGazeListener {
                     break;
                 }
 
-                image.updatePixel(gX + x, gY + y);
+                image.updatePixel(gX + x, gY + y, intensity);
             }
         }
     }
@@ -89,5 +94,9 @@ public class ImagePainter implements IGazeListener {
 
     public BufferedImage getImage() {
         return image;
+    }
+
+    public void setIntensity(int intensity) {
+        this.intensity = intensity;
     }
 }

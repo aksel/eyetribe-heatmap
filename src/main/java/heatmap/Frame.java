@@ -2,6 +2,8 @@ package heatmap;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,6 +16,7 @@ public class Frame extends JFrame {
 
     private ImagePainter imagePainter;
 
+    private JSlider intensitySlider;
 
     /**
      * File path for file-chooser to start at.
@@ -34,10 +37,12 @@ public class Frame extends JFrame {
             e.printStackTrace();
         }
 
-        imagePainter = new ImagePainter();
 
         createMenuBar();
         add(createSettingsPanel(), BorderLayout.CENTER);
+
+        imagePainter = new ImagePainter();
+        imagePainter.setIntensity(intensitySlider.getValue());
 
         pack();
 
@@ -83,14 +88,19 @@ public class Frame extends JFrame {
             intensityPanel.setLayout(settingComponentLayout);
             intensityPanel.setBorder(BorderFactory.createTitledBorder("Intensity"));
 
-            JSlider intensitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
-            intensitySlider.setMajorTickSpacing(10);
-            intensitySlider.setMinorTickSpacing(5);
+            intensitySlider = new JSlider(JSlider.HORIZONTAL, 1, 10, 5);
+            intensitySlider.setMajorTickSpacing(1);
+            intensitySlider.setMinorTickSpacing(1);
             intensitySlider.setPaintTicks(true);
             intensitySlider.setPaintLabels(true);
             intensitySlider.setToolTipText("This determines how quickly the color goes from blue to red.");
 
-            //TODO: Add listener to slider
+            intensitySlider.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent e) {
+                    JSlider source = (JSlider)e.getSource();
+                    imagePainter.setIntensity(source.getValue());
+                }
+            });
 
             intensityPanel.add(intensitySlider);
 
@@ -136,7 +146,7 @@ public class Frame extends JFrame {
             settingsPanel.add(captureButtonsPanel);
         }
 
-        //Create image panel
+        //Create image buttons panel
         {
             JPanel imageSettingsPanel = new JPanel();
             imageSettingsPanel.setLayout(settingComponentLayout);
