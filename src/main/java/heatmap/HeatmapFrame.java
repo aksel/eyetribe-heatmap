@@ -7,6 +7,7 @@ import java.awt.image.BufferedImage;
 public class HeatmapFrame extends JFrame {
 
     public HeatmapFrame(final BufferedImage img) {
+        setUndecorated(true);
         setLayout(new BorderLayout());
         setSize(new Dimension(img.getWidth(), img.getHeight()));
 
@@ -30,6 +31,7 @@ public class HeatmapFrame extends JFrame {
 
         add(imagePanel,BorderLayout.CENTER);
 
+        setLocationRelativeTo(null);
         setVisible(true);
     }
 }
