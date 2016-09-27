@@ -1,4 +1,4 @@
-package heatmap;
+package com.akseltorgard.heatmap;
 
 import com.theeyetribe.clientsdk.GazeManager;
 import com.theeyetribe.clientsdk.IGazeListener;

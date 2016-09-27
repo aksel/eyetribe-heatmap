@@ -1,12 +1,10 @@
-package heatmap;
+package com.akseltorgard.heatmap;
 
 import javax.swing.*;
 
 public class Run {
 
     public static void main(String[] args) {
-        System.out.println("EyeTribe Heatmap");
-
         setSystemLookAndFeel();
 
         CaptureManager captureManager = getActivatedCaptureManager();

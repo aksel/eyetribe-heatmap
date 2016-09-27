@@ -1,4 +1,4 @@
-package heatmap;
+package com.akseltorgard.heatmap;
 
 import javax.swing.*;
 import java.awt.*;

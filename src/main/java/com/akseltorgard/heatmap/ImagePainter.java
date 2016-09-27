@@ -1,10 +1,8 @@
-package heatmap;
+package com.akseltorgard.heatmap;
 
 import com.theeyetribe.clientsdk.IGazeListener;
 import com.theeyetribe.clientsdk.data.GazeData;
 
-import java.awt.Graphics2D;
-import java.awt.Color;
 import java.awt.image.BufferedImage;
 
 public class ImagePainter implements IGazeListener {
