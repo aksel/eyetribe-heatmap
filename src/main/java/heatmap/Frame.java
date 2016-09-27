@@ -217,18 +217,14 @@ public class Frame extends JFrame {
 
             File file = new File(filePath);
 
-            if (!file.canWrite()) {
-                JOptionPane.showMessageDialog(this,
-                        "Cannot write file to: " + filePath,
-                        "Error while saving",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
             try {
                 ImageIO.write(image, "png", file);
             } catch (IOException e) {
                 e.printStackTrace();
+                JOptionPane.showMessageDialog(this,
+                        "Could not write to: : " + filePath,
+                        "Error while saving",
+                        JOptionPane.ERROR_MESSAGE);
             }
 
             JOptionPane.showMessageDialog(this,
