@@ -20,8 +20,9 @@ public class ImagePainter implements IGazeListener {
      */
     private int intensity;
 
-    public ImagePainter() {
-        captureManager = new CaptureManager(this);
+    public ImagePainter(CaptureManager captureManager) {
+        this.captureManager = captureManager;
+        captureManager.setGazeListener(this);
         initImage();
     }
 

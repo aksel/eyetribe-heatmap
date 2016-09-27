@@ -11,9 +11,7 @@ public class CaptureManager {
     /**
      * Initialize the GazeManager. Add shutdown hook, that removes the listener, and deactivates manager.
      */
-    public CaptureManager(IGazeListener gazeListener) {
-        this.gazeListener = gazeListener;
-
+    public CaptureManager() {
         gazeManager = GazeManager.getInstance();
 
         //On shutdown, stop gazemanager and remove the listener.
@@ -51,5 +49,17 @@ public class CaptureManager {
 
     public void stopCapture() {
         gazeManager.removeGazeListener(gazeListener);
+    }
+
+    public void setGazeListener(IGazeListener gazeListener) {
+        this.gazeListener = gazeListener;
+    }
+
+    public boolean isActivated() {
+        return gazeManager.isActivated();
+    }
+
+    public void reactivate() {
+        gazeManager.activate();
     }
 }

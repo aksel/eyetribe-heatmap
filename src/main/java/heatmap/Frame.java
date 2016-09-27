@@ -23,25 +23,16 @@ public class Frame extends JFrame {
      */
     private String lastFolder = "C:\\";
 
-    public Frame() {
+    public Frame(ImagePainter imagePainter) {
         setTitle("Heatmap");
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(false);
 
-        //Set L&F to system look and feel.
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            UIManager.put("Slider.focus", UIManager.get("Slider.background"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
         createMenuBar();
         add(createSettingsPanel(), BorderLayout.CENTER);
 
-        imagePainter = new ImagePainter();
+        this.imagePainter = imagePainter;
         imagePainter.setIntensity(intensitySlider.getValue());
 
         pack();
@@ -234,11 +225,5 @@ public class Frame extends JFrame {
 
             lastFolder = filePath.substring(0, filePath.lastIndexOf('\\'));
         }
-    }
-
-    public static void main(String[] args) {
-        System.out.println("EyeTribe Heatmap");
-        //TODO: Verify server is running, before doing anything else.
-        new Frame();
     }
 }
