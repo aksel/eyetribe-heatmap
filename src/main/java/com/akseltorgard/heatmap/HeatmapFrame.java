@@ -1,5 +1,7 @@
 package com.akseltorgard.heatmap;
 
+import com.sun.awt.AWTUtilities;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -13,6 +15,9 @@ public class HeatmapFrame extends JFrame {
         setUndecorated(true);
         setLayout(new BorderLayout());
         setSize(new Dimension(img.getWidth(), img.getHeight()));
+        setAlwaysOnTop(true);
+
+        AWTUtilities.setWindowOpaque(this, false);
 
         createContextMenu();
 
@@ -32,7 +37,7 @@ public class HeatmapFrame extends JFrame {
             }
         };
 
-        imagePanel.setBackground(Color.BLACK);
+        imagePanel.setOpaque(false);
 
         add(imagePanel,BorderLayout.CENTER);
 
