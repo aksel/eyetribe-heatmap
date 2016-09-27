@@ -1,6 +1,12 @@
 # eyetribe-heatmap
-Heatmap generator for the EyeTribe eye-tracker. Written in Java.
+A simple heatmap generator for the EyeTribe eye tracker.
 
-NOTE:
-This application uses eyetribe-java-0.9.60, which has to be added
-manually, as I cannot seem to figure out how to add it as a dependency.
+Handy for evaluating your UI.
+
+Written in Java, using eyetribe-java-0.9.60.
+
+Features:
+* Eye tracking with the EyeTribe eye tracker
+* Variable intensity
+* Overlay heatmap to display it in real-time
+* Save heatmaps
