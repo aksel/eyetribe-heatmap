@@ -7,7 +7,7 @@ import java.awt.image.BufferedImage;
 
 public class ImagePainter implements IGazeListener {
 
-    final int AREA = 32;
+    final int AREA = 8;
 
     private BufferedHeatmapImage image;
 
